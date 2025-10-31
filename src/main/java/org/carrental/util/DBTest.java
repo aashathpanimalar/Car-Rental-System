@@ -9,13 +9,13 @@ public class DBTest {
             // Use your DBConnUtil to get connection
             Connection conn = DBConnUtil.getConnection();
             if (conn != null) {
-                System.out.println("✅ Database connected successfully!");
+                System.out.println("Database connected successfully!");
                 conn.close();
             } else {
-                System.out.println("❌ Failed to connect to the database!");
+                System.out.println("Failed to connect to the database!");
             }
         } catch (SQLException e) {
-            System.out.println("❌ Database connection failed!");
+            System.out.println("Database connection failed!");
             e.printStackTrace();
         }
     }

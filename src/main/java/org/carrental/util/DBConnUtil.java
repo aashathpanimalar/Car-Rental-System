@@ -4,30 +4,36 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
-
 public class DBConnUtil {
 
-    private static Connection connection = null;
+    private static Connection conn;
 
     public static Connection getConnection() {
-        if (connection == null) {
-            try {
-                // Load MySQL JDBC driver
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                String url="jdbc:mysql://localhost:3306/car_rental_db";
-                String user="root";
-                String password="Myrootv@123";
-                // Connect to database
-                connection = DriverManager.getConnection(url, user, password);
-                System.out.println("✅ Database connected successfully!");
-            } catch (ClassNotFoundException e) {
-                System.out.println("❌ MySQL Driver not found!");
-                e.printStackTrace();
-            } catch (SQLException e) {
-                System.out.println("❌ Database connection failed!");
-                e.printStackTrace();
-            }
+        try {
+            // Load properties using the helper class
+            Properties props = DBPropertiesUtil.loadProperties();
+
+            String url = props.getProperty("db.url");
+            String user = props.getProperty("db.username");
+            String pass = props.getProperty("db.password");
+
+            // Load MySQL JDBC Driver --optional after jdbc 8.0
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            // Establish the connection
+            conn = DriverManager.getConnection(url, user, pass);
+
+        } catch (ClassNotFoundException e) {
+            System.out.println("❌ MySQL Driver not found!");
+            e.printStackTrace();
+        } catch (SQLException e) {
+            System.out.println("❌ SQL Error while connecting!");
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("❌ General error while establishing connection!");
+            e.printStackTrace();
         }
-        return connection;
+
+        return conn;
     }
 }
