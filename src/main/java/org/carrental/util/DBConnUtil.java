@@ -14,13 +14,9 @@ public class DBConnUtil {
             try {
                 // Load MySQL JDBC driver
                 Class.forName("com.mysql.cj.jdbc.Driver");
-
-                // Load properties from db.properties
-                Properties props = DBPropertyUtil.getProperties("src/main/resources/db.properties");
-                String url = DBPropertyUtil.getConnectionString(props);
-                String user = props.getProperty("username");
-                String password = props.getProperty("password");
-
+                String url="jdbc:mysql://localhost:3306/car_rental_db";
+                String user="root";
+                String password="Myrootv@123";
                 // Connect to database
                 connection = DriverManager.getConnection(url, user, password);
                 System.out.println("✅ Database connected successfully!");
