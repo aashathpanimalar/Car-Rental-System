@@ -14,7 +14,6 @@ public class Car {
 
     public Car(int vehicleID , String make, String model, int year , double dailyRate, String status,
                int passengerCapacity, int engineCapacity){
-
         this.vehicleID=vehicleID;
         this.make=make;
         this.model=model;
