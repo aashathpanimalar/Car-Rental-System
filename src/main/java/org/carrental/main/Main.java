@@ -153,14 +153,14 @@ public class Main {
         }
     }
 
-    private static void listRentedCars(ICarLeaseRepository dao) {
-        var cars = dao.listRentedCars();
-        if (cars.isEmpty()) {
-            System.out.println("⚠️ No rented cars found in the database.");
-        } else {
-            cars.forEach(System.out::println);
-        }
-    }
+    // private static void listRentedCars(ICarLeaseRepository dao) {
+    //     var cars = dao.listRentedCars();
+    //     if (cars.isEmpty()) {
+    //         System.out.println("⚠️ No rented cars found in the database.");
+    //     } else {
+    //         cars.forEach(System.out::println);
+    //     }
+    // }
 
     private static void findCar(Scanner sc, ICarLeaseRepository dao) {
         System.out.print("Enter Car ID: ");
