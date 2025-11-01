@@ -74,7 +74,7 @@ public class Main {
                 case 1 -> addCar(sc, dao);
                 case 2 -> removeCar(sc, dao);
                 case 3 -> listAvailableCars(dao);
-                case 4 -> listRentedCars(dao);
+                //case 4 -> listRentedCars(dao);
                 case 5 -> findCar(sc, dao);
                 case 6 -> {}
                 default -> System.out.println("Invalid option!");
