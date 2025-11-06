@@ -2,8 +2,6 @@ package org.carrental.dao;
 
 import org.carrental.entity.*;
 import org.carrental.exception.*;
-
-import java.sql.Date;
 import java.util.List;
 
 public interface ICarLeaseRepository {

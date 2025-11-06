@@ -24,7 +24,7 @@ public class Car {
         this.engineCapacity = engineCapacity;
     }
 
-    // NOTE: standardized method names to getCarID / setCarID
+   
     public int getCarID() { return carID; }
     public void setCarID(int carID) { this.carID = carID; }
 

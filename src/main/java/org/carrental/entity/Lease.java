@@ -24,7 +24,7 @@ public class Lease {
     public int getLeaseID() { return leaseID; }
     public void setLeaseID(int leaseID) { this.leaseID = leaseID; }
 
-    // NOTE: standardized method names to getCarID / setCarID
+   
     public int getCarID() { return carID; }
     public void setCarID(int carID) { this.carID = carID; }
 
