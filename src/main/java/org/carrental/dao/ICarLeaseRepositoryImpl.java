@@ -40,11 +40,18 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
         String sql = "DELETE FROM vehicle WHERE carID=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, carID);
-            ps.executeUpdate();
+            int rows = ps.executeUpdate();
+
+            if (rows > 0) {
+                System.out.println("🗑 Car removed successfully!");
+            } else {
+                System.out.println("⚠️ Car ID " + carID + " not found in database.");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 
     @Override
     public List<Car> listAvailableCars() {
@@ -173,7 +180,7 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
         findCustomerById(customerID);
         findCarById(carID);
 
-        String sql = "INSERT INTO lease(leaseID, customerID,carID, startDate, endDate, type) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO lease(leaseID, customerID, carID, startDate, endDate, type, status) VALUES (?, ?, ?, ?, ?, ?, 'active')";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, leaseID);
             ps.setInt(2, customerID);
@@ -195,16 +202,39 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
 
     @Override
     public void returnCar(int leaseID) throws LeaseNotFoundException {
-        String sql = "UPDATE vehicle v JOIN lease l ON v.carID=l.carID SET v.status='available' WHERE l.leaseID=?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        String getCarSql = "SELECT carID FROM lease WHERE leaseID=? AND status='active'";
+        try (PreparedStatement ps = conn.prepareStatement(getCarSql)) {
             ps.setInt(1, leaseID);
-            int updated = ps.executeUpdate();
-            if (updated == 0)
-                throw new LeaseNotFoundException("Lease ID " + leaseID + " not found");
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                int carID = rs.getInt("carID");
+
+                // 1️⃣ Mark car as available
+                String updateCar = "UPDATE vehicle SET status='available' WHERE carID=?";
+                try (PreparedStatement psCar = conn.prepareStatement(updateCar)) {
+                    psCar.setInt(1, carID);
+                    psCar.executeUpdate();
+                }
+
+                // 2️⃣ Mark lease as completed
+                String updateLease = "UPDATE lease SET status='completed' WHERE leaseID=?";
+                try (PreparedStatement psLease = conn.prepareStatement(updateLease)) {
+                    psLease.setInt(1, leaseID);
+                    psLease.executeUpdate();
+                }
+
+                System.out.println("✅ Car returned successfully and lease marked as completed in database.");
+            } else {
+                throw new LeaseNotFoundException("❌ Lease ID " + leaseID + " not found or already completed.");
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
+
     @Override
     public Lease getLeaseID(int leaseID) {
         String sql = "SELECT * FROM lease WHERE leaseID = ?";
@@ -231,7 +261,7 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
     @Override
     public List<Lease> listActiveLeases() {
         List<Lease> list = new ArrayList<>();
-        String sql = "SELECT * FROM lease";
+        String sql = "SELECT * FROM lease WHERE status='active'";
         try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 list.add(new Lease(
@@ -249,23 +279,67 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
         return list;
     }
 
+
+
     @Override
     public List<Lease> listLeaseHistory() {
-        return listActiveLeases(); // for now, same output (can later filter by date)
+        List<Lease> list = new ArrayList<>();
+        String sql = "SELECT * FROM lease WHERE status='completed'";
+        try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                list.add(new Lease(
+                        rs.getInt("leaseID"),
+                        rs.getInt("customerID"),
+                        rs.getInt("carID"),
+                        rs.getDate("startDate"),
+                        rs.getDate("endDate"),
+                        rs.getString("type")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 
+
     //===== Payment Handling =====
-     @Override
+    @Override
     public void recordPayment(Lease lease, double amt) {
-        String sql = "INSERT INTO payment(leaseID, paymentDate, amount) VALUES (?, NOW(), ?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, lease.getLeaseID());
-            ps.setDouble(2, amt);
-            ps.executeUpdate();
+        String insertPayment = "INSERT INTO payment(leaseID, paymentDate, amount) VALUES (?, NOW(), ?)";
+        String updateLease = "UPDATE lease SET status='completed' WHERE leaseID=?";
+        //String deleteLease = "DELETE FROM lease WHERE leaseID=? AND status='completed'";
+
+        try {
+            // 1️⃣ Record payment details
+            try (PreparedStatement ps = conn.prepareStatement(insertPayment)) {
+                ps.setInt(1, lease.getLeaseID());
+                ps.setDouble(2, amt);
+                ps.executeUpdate();
+                System.out.println("✅ Payment recorded successfully!");
+            }
+
+            // 2️⃣ Mark the lease as completed (if not already)
+            try (PreparedStatement psUpdate = conn.prepareStatement(updateLease)) {
+                psUpdate.setInt(1, lease.getLeaseID());
+                psUpdate.executeUpdate();
+                System.out.println("🔄 Lease marked as completed in database.");
+            }
+
+            // 3️⃣ Remove the lease record if you want it deleted from active list
+//            try (PreparedStatement psDelete = conn.prepareStatement(deleteLease)) {
+//                psDelete.setInt(1, lease.getLeaseID());
+//                int deleted = psDelete.executeUpdate();
+//                if (deleted > 0) {
+//                    System.out.println("🗑️ Lease removed from active list (moved to history).");
+//                }
+//            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 
     @Override
     public List<Payment> retrievePaymentHistory(int customerID) {

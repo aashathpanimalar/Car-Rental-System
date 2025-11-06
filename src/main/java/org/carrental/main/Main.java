@@ -161,7 +161,9 @@ public class Main {
         if (customers.isEmpty()) {
             System.out.println("⚠️ No customers found in the database.");
         } else {
-            customers.forEach(System.out::println);
+            for (Customer c : customers) {
+                System.out.println(c);
+            }
         }
     }
 
@@ -177,6 +179,7 @@ public class Main {
     private static void addCar(Scanner sc, ICarLeaseRepository dao) {
         System.out.print("Enter Car ID: ");
         int carID=sc.nextInt();
+        sc.nextLine();
         System.out.print("Make: ");
         String make = sc.nextLine();
         System.out.print("Model: ");
@@ -196,16 +199,19 @@ public class Main {
 
     private static void removeCar(Scanner sc, ICarLeaseRepository dao) {
         System.out.print("Enter Vehicle ID: ");
-        dao.removeCar(sc.nextInt());
-        System.out.println("🗑Car removed!");
+        dao.removeCar(sc.nextInt());  // DAO will handle the message
     }
+
 
     private static void listAvailableCars(ICarLeaseRepository dao) {
         var cars = dao.listAvailableCars();
         if (cars.isEmpty()) {
             System.out.println("⚠️ No available cars found in the database.");
         } else {
-            cars.forEach(System.out::println);
+            //cars.forEach(System.out::println);
+            for (Car c : cars) {
+                System.out.println(c);
+            }
         }
     }
 
