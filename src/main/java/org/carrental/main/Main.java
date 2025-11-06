@@ -4,6 +4,8 @@ import org.carrental.dao.*;
 import org.carrental.entity.*;
 import org.carrental.exception.*;
 
+import java.sql.Date;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -16,7 +18,9 @@ public class Main {
             System.out.println("\n===== CAR RENTAL MANAGEMENT SYSTEM =====");
             System.out.println("1. Customer Management");
             System.out.println("2. Car Management");
-            System.out.println("3. Exit");
+            System.out.println("3. Lease Management");
+            System.out.println("4. Payment Management");
+            System.out.println("5. Exit");
             System.out.print("Enter your choice: ");
             choice = sc.nextInt();
             sc.nextLine();
@@ -24,10 +28,12 @@ public class Main {
             switch (choice) {
                 case 1 -> customerMenu(sc, dao);
                 case 2 -> carMenu(sc, dao);
-                case 3 -> System.out.println("Exiting... Thank you!");
+                case 3 -> leaseMenu(sc, dao);
+                case 4 -> paymentMenu(sc, dao);
+                case 5 -> System.out.println("Exiting... Thank you!");
                 default -> System.out.println("Invalid choice! Try again.");
             }
-        } while (choice != 3);
+        } while (choice != 5);
     }
 
     // -------------------------CUSTOMER MENU -------------------------
@@ -63,7 +69,7 @@ public class Main {
             System.out.println("1. Add Car");
             System.out.println("2. Remove Car");
             System.out.println("3. List Available Cars");
-            //System.out.println("4. List Rented Cars");
+            System.out.println("4. List Rented Cars");
             System.out.println("5. Find Car by ID");
             System.out.println("6. Back");
             System.out.print("Enter your choice: ");
@@ -74,7 +80,7 @@ public class Main {
                 case 1 -> addCar(sc, dao);
                 case 2 -> removeCar(sc, dao);
                 case 3 -> listAvailableCars(dao);
-                //case 4 -> listRentedCars(dao);
+                case 4 -> listRentedCars(dao);
                 case 5 -> findCar(sc, dao);
                 case 6 -> {}
                 default -> System.out.println("Invalid option!");
@@ -203,14 +209,14 @@ public class Main {
         }
     }
 
-    // private static void listRentedCars(ICarLeaseRepository dao) {
-    //     var cars = dao.listRentedCars();
-    //     if (cars.isEmpty()) {
-    //         System.out.println("⚠️ No rented cars found in the database.");
-    //     } else {
-    //         cars.forEach(System.out::println);
-    //     }
-    // }
+    private static void listRentedCars(ICarLeaseRepository dao) {
+        var cars = dao.listRentedCars();
+        if (cars.isEmpty()) {
+            System.out.println("⚠️ No rented cars found in the database.");
+        } else {
+            cars.forEach(System.out::println);
+        }
+    }
 
     private static void findCar(Scanner sc, ICarLeaseRepository dao) {
         System.out.print("Enter Vehicle ID: ");
