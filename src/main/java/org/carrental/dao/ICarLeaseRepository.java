@@ -18,4 +18,20 @@ public interface ICarLeaseRepository {
     void removeCustomer(int customerID);
     List<Customer> listCustomers();
     Customer findCustomerById(int customerID) throws CustomerNotFoundException;
+
+    // ===== Lease Management =====
+    void createLease(int customerID, int carID, int car, Date startDate, Date endDate, String type)
+            throws CustomerNotFoundException, CarNotFoundException;
+
+    void returnCar(int leaseID) throws LeaseNotFoundException;
+
+    Lease getLeaseID(int leaseID);
+
+    List<Lease> listActiveLeases();
+    List<Lease> listLeaseHistory();
+
+    // ===== Payment Handling =====
+    void recordPayment(Lease lease, double amount);
+    List<Payment> retrievePaymentHistory(int customerID);
+    double calculateTotalRevenue();
 }
