@@ -19,15 +19,16 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
     // ===== Car Management =====
     @Override
     public void addCar(Car car) {
-        String sql = "INSERT INTO vehicle(make, model, year, dailyRate, status, passengerCapacity, engineCapacity) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO vehicle(carID,make, model, year, dailyRate, status, passengerCapacity, engineCapacity) VALUES (?, ?, ?, ?,?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, car.getMake());
-            ps.setString(2, car.getModel());
-            ps.setInt(3, car.getYear());
-            ps.setDouble(4, car.getDailyRate());
-            ps.setString(5, car.getStatus());
-            ps.setInt(6, car.getPassengerCapacity());
-            ps.setInt(7, car.getEngineCapacity());
+            ps.setInt(1,car.getCarID());
+            ps.setString(2, car.getMake());
+            ps.setString(3, car.getModel());
+            ps.setInt(4, car.getYear());
+            ps.setDouble(5, car.getDailyRate());
+            ps.setString(6, car.getStatus());
+            ps.setInt(7, car.getPassengerCapacity());
+            ps.setInt(8, car.getEngineCapacity());
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -36,7 +37,7 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
 
     @Override
     public void removeCar(int carID) {
-        String sql = "DELETE FROM vehicle WHERE vehicleID=?";
+        String sql = "DELETE FROM vehicle WHERE carID=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, carID);
             ps.executeUpdate();
@@ -72,7 +73,7 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
 
     private Car mapCar(ResultSet rs) throws SQLException {
         return new Car(
-                rs.getInt("vehicleID"),
+                rs.getInt("carID"),
                 rs.getString("make"),
                 rs.getString("model"),
                 rs.getInt("year"),
@@ -85,7 +86,7 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
 
     @Override
     public Car findCarById(int carID) throws CarNotFoundException {
-        String sql = "SELECT * FROM vehicle WHERE vehicleID=?";
+        String sql = "SELECT * FROM vehicle WHERE carID=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, carID);
             ResultSet rs = ps.executeQuery();
@@ -166,22 +167,23 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
 
     // ===== Lease Management =====
     @Override
-    public void createLease(int customerID, int carID, Date startDate, Date endDate, String type)
+    public void createLease(int leaseID,int customerID, int carID, Date startDate, Date endDate, String type)
             throws CustomerNotFoundException, CarNotFoundException {
 
         findCustomerById(customerID);
         findCarById(carID);
 
-        String sql = "INSERT INTO lease(vehicleID, customerID, startDate, endDate, type) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO lease(leaseID, customerID,carID, startDate, endDate, type) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, carID);
+            ps.setInt(1, leaseID);
             ps.setInt(2, customerID);
-            ps.setDate(3, startDate);
-            ps.setDate(4, endDate);
-            ps.setString(5, type);
+            ps.setInt(3,carID);
+            ps.setDate(4, startDate);
+            ps.setDate(5, endDate);
+            ps.setString(6, type);
             ps.executeUpdate();
 
-            String update = "UPDATE vehicle SET status='notAvailable' WHERE vehicleID=?";
+            String update = "UPDATE vehicle SET status='notAvailable' WHERE carID=?";
             try (PreparedStatement ps2 = conn.prepareStatement(update)) {
                 ps2.setInt(1, carID);
                 ps2.executeUpdate();
@@ -193,7 +195,7 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
 
     @Override
     public void returnCar(int leaseID) throws LeaseNotFoundException {
-        String sql = "UPDATE vehicle v JOIN lease l ON v.vehicleID=l.vehicleID SET v.status='available' WHERE l.leaseID=?";
+        String sql = "UPDATE vehicle v JOIN lease l ON v.carID=l.carID SET v.status='available' WHERE l.leaseID=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, leaseID);
             int updated = ps.executeUpdate();
@@ -202,6 +204,28 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    @Override
+    public Lease getLeaseID(int leaseID) {
+        String sql = "SELECT * FROM lease WHERE leaseID = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, leaseID);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Lease(
+                            rs.getInt("leaseID"),
+                            rs.getInt("customerID"),
+                            rs.getInt("carID"),
+                            rs.getDate("startDate"),
+                            rs.getDate("endDate"),
+                            rs.getString("type")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -212,8 +236,8 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
             while (rs.next()) {
                 list.add(new Lease(
                         rs.getInt("leaseID"),
-                        rs.getInt("vehicleID"),
                         rs.getInt("customerID"),
+                        rs.getInt("carID"),
                         rs.getDate("startDate"),
                         rs.getDate("endDate"),
                         rs.getString("type")
@@ -230,13 +254,13 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
         return listActiveLeases(); // for now, same output (can later filter by date)
     }
 
-    // ===== Payment Handling =====
-    @Override
-    public void recordPayment(Lease lease, double amount) {
+    //===== Payment Handling =====
+     @Override
+    public void recordPayment(Lease lease, double amt) {
         String sql = "INSERT INTO payment(leaseID, paymentDate, amount) VALUES (?, NOW(), ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, lease.getLeaseID());
-            ps.setDouble(2, amount);
+            ps.setDouble(2, amt);
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

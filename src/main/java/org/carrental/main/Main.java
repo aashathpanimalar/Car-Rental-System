@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws CarNotFoundException {
         Scanner sc = new Scanner(System.in);
         ICarLeaseRepository dao = new ICarLeaseRepositoryImpl();
         int choice;
@@ -36,7 +36,7 @@ public class Main {
         } while (choice != 5);
     }
 
-    // ---------------- CUSTOMER MENU ----------------
+    // -------------------------CUSTOMER MENU -------------------------
     private static void customerMenu(Scanner sc, ICarLeaseRepository dao) {
         int opt;
         do {
@@ -61,7 +61,7 @@ public class Main {
         } while (opt != 5);
     }
 
-    // ---------------- CAR MENU ----------------
+    //------------------------- CAR MENU-----------------------------
     private static void carMenu(Scanner sc, ICarLeaseRepository dao) {
         int opt;
         do {
@@ -88,7 +88,7 @@ public class Main {
         } while (opt != 6);
     }
 
-    // ---------------- LEASE MENU ----------------
+    // ---------------------------LEASE MENU ---------------------------
     private static void leaseMenu(Scanner sc, ICarLeaseRepository dao) {
         int opt;
         do {
@@ -113,8 +113,8 @@ public class Main {
         } while (opt != 5);
     }
 
-    // ---------------- PAYMENT MENU ----------------
-    private static void paymentMenu(Scanner sc, ICarLeaseRepository dao) {
+    //-------------------------PAYMENT MENU-------------------------------
+    private static void paymentMenu(Scanner sc, ICarLeaseRepository dao) throws CarNotFoundException {
         int opt;
         do {
             System.out.println("\n--- Payment Management ---");
@@ -129,7 +129,7 @@ public class Main {
             switch (opt) {
                 case 1 -> recordPayment(sc, dao);
                 case 2 -> viewPayments(sc, dao);
-                case 3 -> System.out.println("💰 Total Revenue: " + dao.calculateTotalRevenue());
+                case 3 -> System.out.println("💰Total Revenue: " + dao.calculateTotalRevenue());
                 case 4 -> {}
                 default -> System.out.println("Invalid option!");
             }
@@ -175,6 +175,8 @@ public class Main {
     }
 
     private static void addCar(Scanner sc, ICarLeaseRepository dao) {
+        System.out.print("Enter Car ID: ");
+        int carID=sc.nextInt();
         System.out.print("Make: ");
         String make = sc.nextLine();
         System.out.print("Model: ");
@@ -188,14 +190,14 @@ public class Main {
         System.out.print("Engine Capacity: ");
         int engine = sc.nextInt();
         sc.nextLine();
-        dao.addCar(new Car(0, make, model, year, rate, "available", capacity, engine));
-        System.out.println("✅ Car added!");
+        dao.addCar(new Car(carID, make, model, year, rate, "available", capacity, engine));
+        System.out.println("✅Car added!");
     }
 
     private static void removeCar(Scanner sc, ICarLeaseRepository dao) {
-        System.out.print("Enter Car ID: ");
+        System.out.print("Enter Vehicle ID: ");
         dao.removeCar(sc.nextInt());
-        System.out.println("🗑 Car removed!");
+        System.out.println("🗑Car removed!");
     }
 
     private static void listAvailableCars(ICarLeaseRepository dao) {
@@ -217,7 +219,7 @@ public class Main {
     }
 
     private static void findCar(Scanner sc, ICarLeaseRepository dao) {
-        System.out.print("Enter Car ID: ");
+        System.out.print("Enter Vehicle ID: ");
         try {
             System.out.println(dao.findCarById(sc.nextInt()));
         } catch (CarNotFoundException e) {
@@ -227,6 +229,8 @@ public class Main {
 
     private static void createLease(Scanner sc, ICarLeaseRepository dao) {
         try {
+            System.out.print("Lease ID: ");
+            int leaseid=sc.nextInt();
             System.out.print("Customer ID: ");
             int cust = sc.nextInt();
             System.out.print("Car ID: ");
@@ -238,10 +242,10 @@ public class Main {
             Date start = Date.valueOf(sc.nextLine());
             System.out.print("End Date (yyyy-mm-dd): ");
             Date end = Date.valueOf(sc.nextLine());
-            dao.createLease(cust, car, start, end, type);
+            dao.createLease(leaseid,cust, car, start, end, type);
             System.out.println("✅ Lease created!");
         } catch (Exception e) {
-            System.out.println("❌ Error: " + e.getMessage());
+            System.out.println("❌Error: " + e.getMessage());
         }
     }
 
@@ -273,15 +277,34 @@ public class Main {
         }
     }
 
-    private static void recordPayment(Scanner sc, ICarLeaseRepository dao) {
+    private static void recordPayment(Scanner sc, ICarLeaseRepository dao) throws CarNotFoundException {
         System.out.print("Enter Lease ID: ");
-        int lease = sc.nextInt();
-        System.out.print("Enter Amount: ");
-        double amt = sc.nextDouble();
-        dao.recordPayment(new Lease(lease, 0, 0, null, null, ""), amt);
-        System.out.println("✅ Payment recorded!");
+        int lease_id = sc.nextInt();
+        //Step 1: Fetch Lease details
+        Lease lease = dao.getLeaseID(lease_id);
+        if (lease == null) {
+            System.out.println("Lease not found!");
+            return;
+        }//Step 2: Fetch Car details using Lease
+        Car car = dao.findCarById(lease.getCarID());
+        if (car == null) {
+            System.out.println("Car not found for this lease!");
+            return;
+        }
+        // Step 3: Calculate Payment using objects
+        Payment payment = new Payment();
+        try {
+            payment.calculateAmount(car, lease);
+        } catch (IllegalArgumentException e) {
+            System.out.println("⚠️ " + e.getMessage());
+            return;
+        }
+        double amt = payment.getAmount();
+        //Step 4: Save Payment Record in db
+        dao.recordPayment(lease, amt);
+        System.out.println("✅ Payment recorded successfully!");
+        System.out.println("💰 Amount Charged: ₹" + amt);
     }
-
     private static void viewPayments(Scanner sc, ICarLeaseRepository dao) {
         System.out.print("Enter Customer ID: ");
         int id = sc.nextInt();
@@ -292,4 +315,5 @@ public class Main {
             payments.forEach(System.out::println);
         }
     }
+
 }

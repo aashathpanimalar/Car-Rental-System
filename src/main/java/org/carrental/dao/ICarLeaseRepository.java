@@ -22,10 +22,13 @@ public interface ICarLeaseRepository {
     Customer findCustomerById(int customerID) throws CustomerNotFoundException;
 
     // ===== Lease Management =====
-    void createLease(int customerID, int carID, Date startDate, Date endDate, String type)
+    void createLease(int customerID, int carID, int car, Date startDate, Date endDate, String type)
             throws CustomerNotFoundException, CarNotFoundException;
 
     void returnCar(int leaseID) throws LeaseNotFoundException;
+
+    Lease getLeaseID(int leaseID);
+
     List<Lease> listActiveLeases();
     List<Lease> listLeaseHistory();
 

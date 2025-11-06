@@ -1,4 +1,6 @@
-package org.carrental.util;
+package org.carrental.main;
+
+import org.carrental.util.DBConnUtil;
 
 import java.sql.Connection;
 import java.sql.SQLException;
