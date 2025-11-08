@@ -210,14 +210,14 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
             if (rs.next()) {
                 int carID = rs.getInt("carID");
 
-                // 1️⃣ Mark car as available
+                //  Mark car as available
                 String updateCar = "UPDATE vehicle SET status='available' WHERE carID=?";
                 try (PreparedStatement psCar = conn.prepareStatement(updateCar)) {
                     psCar.setInt(1, carID);
                     psCar.executeUpdate();
                 }
 
-                // 2️⃣ Mark lease as completed
+                //  Mark lease as completed
                 String updateLease = "UPDATE lease SET status='completed' WHERE leaseID=?";
                 try (PreparedStatement psLease = conn.prepareStatement(updateLease)) {
                     psLease.setInt(1, leaseID);
@@ -311,7 +311,7 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
         //String deleteLease = "DELETE FROM lease WHERE leaseID=? AND status='completed'";
 
         try {
-            // 1️⃣ Record payment details
+            //  Record payment details
             try (PreparedStatement ps = conn.prepareStatement(insertPayment)) {
                 ps.setInt(1, lease.getLeaseID());
                 ps.setDouble(2, amt);
@@ -319,14 +319,14 @@ public class ICarLeaseRepositoryImpl implements ICarLeaseRepository {
                 System.out.println("✅ Payment recorded successfully!");
             }
 
-            // 2️⃣ Mark the lease as completed (if not already)
+            //  Mark the lease as completed 
             try (PreparedStatement psUpdate = conn.prepareStatement(updateLease)) {
                 psUpdate.setInt(1, lease.getLeaseID());
                 psUpdate.executeUpdate();
                 System.out.println("🔄 Lease marked as completed in database.");
             }
 
-            // 3️⃣ Remove the lease record if you want it deleted from active list
+            //  Remove the lease record if you want it deleted from active list
 //            try (PreparedStatement psDelete = conn.prepareStatement(deleteLease)) {
 //                psDelete.setInt(1, lease.getLeaseID());
 //                int deleted = psDelete.executeUpdate();
